@@ -76,25 +76,54 @@ nav button .nav-icon{font-size:1.5rem}
 <br><button onclick="document.getElementById('errorBanner').style.display='none'" style="margin-top:8px;padding:8px 16px;background:#d32f2f;color:#fff;border:none;border-radius:4px;cursor:pointer">閉じる</button>
 </div>
 <script>
-var _errCount = 0;
-window.onerror = function(msg, url, line, col, error) {
-  _errCount++;
-  if (_errCount === 1) {
-    document.getElementById('errorBanner').style.display = 'block';
-    document.getElementById('errorMsg').textContent = msg + ' (line ' + line + ')';
-  }
-  return false;
-};
-if (typeof renderPrograms !== 'function') {
-  document.getElementById('errorBanner').style.display = 'block';
-  document.getElementById('errorMsg').textContent = 'Functions not loaded! Try refreshing.';
-}
+// Diagnostics banner
+(function(){
+  var banner=document.createElement('div');
+  banner.id='debugBanner';
+  banner.style.cssText='position:fixed;top:0;left:0;right:0;background:#ff3;color:#000;padding:10px;font-size:13px;z-index:99999;font-family:sans-serif;border-bottom:2px solid #900;word-break:break-all';
+  var log=[],ok=true;
+  
+  window.onerror=function(msg,url,line,col,err){
+    log.push('ERR:'+msg+' L'+line);ok=false;return false;
+  };
+  
+  // Run after page fully loads
+  window.addEventListener('load',function(){
+    try{
+      log.push('DOM ready');
+      log.push('cfg='+typeof(cfg));
+      log.push('EXERCISES='+(EXERCISES?EXERCISES.length:'X'));
+      log.push('PROGRAMS='+(PROGRAMS?PROGRAMS.length:'X'));
+      log.push('renderPrograms='+(typeof(renderPrograms)));
+      log.push('renderExercises='+(typeof(renderExercises)));
+      
+      // Check if screens exist
+      var home=document.getElementById('homeScreen');
+      log.push('homeScreen='+(home?'FOUND':'MISSING'));
+      if(home) log.push('activeClass='+home.classList.contains('active'));
+      
+      // Check if render was called
+      var pl=document.getElementById('programList');
+      log.push('programListItems='+pl.childNodes.length);
+    }catch(e){log.push('FATAL:'+e.message);}
+    
+    banner.textContent='🔧 Debug: '+log.join(' | ');
+    if(!ok)banner.style.background='#f44';
+    document.body.insertBefore(banner,document.body.firstChild);
+  });
+})();
 </script>
 
 <header>
   <h1>🏋️ Platinum Fitness</h1>
   <p>室内で安全に鍛える筋力トレーニング</p>
-</header>
+
+<div style="text-align:center;padding:8px">
+<button onclick="alert('JavaScript works! cfg='+typeof(cfg)+' exercises='+(EXERCISES?EXERCISES.length:0))" 
+        style="padding:8px 24px;font-size:16px;background:#2c7a4b;color:white;border:none;border-radius:8px;cursor:pointer">
+⚡ テストボタン（JS動作確認）
+</button>
+</div></header>
 
 <!-- HOME -->
 <div id="homeScreen" class="screen active">
