@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2c7a4b">
+<title>おうち健康体操</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#2c7a4b;--green-light:#e8f5e9;--orange:#ff8f00;--red:#d32f2f;--bg:#f5f5f0;--card:#fff;--text:#212121;--muted:#757575;--radius:16px;--shadow:0 2px 12px rgba(0,0,0,.08)}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100dvh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;font-size:inherit}
+button:active{opacity:.7}
+
+/* ── header ── */
+header{background:linear-gradient(135deg,var(--green),#3da05e);color:#fff;padding:20px 16px 18px;text-align:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+header h1{font-size:1.5rem;font-weight:700;letter-spacing:.04em}
+header p{font-size:.85rem;opacity:.9;margin-top:2px}
+
+/* ── screens ── */
+.screen{display:none;padding:16px;max-width:420px;margin:0 auto;padding-bottom:100px}
+.screen.active{display:block}
+
+/* ── home ── */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:14px;transition:transform .15s}
+.card:active{transform:scale(.98)}
+.card h2{font-size:1.1rem;margin-bottom:6px;color:var(--green)}
+.card p{font-size:.9rem;color:var(--muted)}
+
+.exercise-list{list-style:none}
+.exercise-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #eee;cursor:pointer}
+.exercise-item:last-child{border-bottom:none}
+.exercise-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.exercise-info h3{font-size:1rem;margin-bottom:2px}
+.exercise-info span{font-size:.8rem;color:var(--muted)}
+
+/* ── exercise detail ── */
+.back-btn{background:none;color:var(--green);font-size:1rem;font-weight:600;padding:8px 0;margin-bottom:10px;display:flex;align-items:center;gap:4px}
+.detail-header{text-align:center;padding:20px 0}
+.detail-header .big-icon{font-size:3.5rem;display:block;margin-bottom:8px}
+.detail-header h2{font-size:1.4rem}
+.step-box{background:var(--green-light);border-radius:12px;padding:16px;margin-bottom:12px}
+.step-box h4{font-size:.95rem;margin-bottom:8px;color:var(--green)}
+.step-box ol{padding-left:20px;font-size:.92rem;line-height:1.8}
+
+/* ── workout mode ── */
+.workout-mode{text-align:center;padding:20px 0}
+.timer-circle{width:200px;height:200px;border-radius:50%;background:conic-gradient(var(--green) var(--pct,0%),#e0e0e0 0);display:flex;align-items:center;justify-content:center;margin:20px auto;position:relative;transition:background .3s}
+.timer-circle span{position:absolute;width:170px;height:170px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content-center}
+.timer-circle .time{font-size:2.8rem;font-weight:700;color:var(--green)}
+.timer-circle .label{font-size:.85rem;color:var(--muted)}
+
+.rest-bar{height:8px;background:#e0e0e0;border-radius:4px;margin:16px 0;overflow:hidden}
+.rest-bar-inner{height:100%;background:var(--orange);border-radius:4px;transition:width .3s}
+
+.exercise-name-display{font-size:1.3rem;font-weight:700;margin:12px 0;min-height:48px}
+.set-label{font-size:1rem;color:var(--muted);margin-bottom:8px}
+
+.btn-group{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.btn{padding:14px 28px;border-radius:30px;font-size:1.05rem;font-weight:700;transition:all .15s}
+.btn-primary{background:var(--green);color:#fff}
+.btn-secondary{background:#e0e0e0;color:var(--text)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-warning{background:var(--orange);color:#fff}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+.progress-row{display:flex;justify-content:center;gap:6px;margin:12px 0;flex-wrap:wrap}
+.progress-dot{width:10px;height:10px;border-radius:50%;background:#e0e0e0;transition:background .2s}
+.progress-dot.done{background:var(--green)}
+.progress-dot.current{background:var(--orange);transform:scale(1.3)}
+
+/* ── settings ── */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #eee}
+.setting-row label{font-size:.95rem}
+.setting-row input[type=range]{width:140px;accent-color:var(--green)}
+.setting-row .val{font-size:.9rem;color:var(--green);font-weight:600;min-width:40px;text-align:right}
+
+/* ── navigation bar ── */
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:space-around;padding:8px 0;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:10;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+nav button{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;color:var(--muted);font-size:.72rem;padding:4px 12px;min-width:60px}
+nav button.active{color:var(--green);font-weight:700}
+nav button .nav-icon{font-size:1.4rem}
+
+/* ── completion screen ── */
+.complete-msg{text-align:center;padding:40px 0}
+.complete-msg .emoji{font-size:4rem;display:block;margin-bottom:16px}
+.complete-msg h2{font-size:1.5rem;color:var(--green);margin-bottom:8px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
+.stat-card{background:var(--green-light);border-radius:12px;padding:14px;text-align:center}
+.stat-card .num{font-size:1.6rem;font-weight:700;color:var(--green)}
+.stat-card .desc{font-size:.8rem;color:var(--muted)}
+
+/* ── animations ── */
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+
+/* dark hint */
+.hint{font-size:.8rem;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header>
+  <h1>🏋️ おうち健康体操</h1>
+  <p>畳一枚でできる・高齢者向け筋力トレーニング</p>
+</header>
+
+<!-- ═══ HOME SCREEN ═══ -->
+<div id="homeScreen" class="screen active">
+  <!-- Daily tip card -->
+  <div class="card" style="border-left:4px solid var(--orange)">
+    <h2>💡 本日のコツ</h2>
+    <p id="dailyTip">運動は毎日続けることが一番大切です。無理せず、気持ち良い範囲で行いましょう。</p>
+  </div>
+
+  <!-- Quick start -->
+  <div class="card" onclick="startQuickWorkout()" style="cursor:pointer;text-align:center;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:none">
+    <h2 style="color:var(--green);font-size:1.3rem">▶ クイックスタート</h2>
+    <p>最短コース（約8分）をサクッと開始</p>
+  </div>
+
+  <!-- Category selector -->
+  <h3 style="margin:18px 0 10px;font-size:1.05rem;color:var(--green)">📋 プログラムを選ぶ</h3>
+  <ul class="exercise-list" id="programList"></ul>
+
+  <h3 style="margin:18px 0 10px;font-size:1.05rem;color:var(--green)">🧘 運動の詳細を見る</h3>
+  <ul class="exercise-list" id="exerciseDetailList"></ul>
+</div>
+
+<!-- ═══ EXERCISE DETAIL SCREEN ═══ -->
+<div id="detailScreen" class="screen">
+  <button class="back-btn" onclick="showScreen('homeScreen')">← 戻る</button>
+  <div class="detail-header">
+    <span class="big-icon" id="detailIcon"></span>
+    <h2 id="detailName"></h2>
+  </div>
+  <div class="step-box" id="detailSteps"></div>
+  <div class="step-box" id="detailNotes" style="background:#fff3e0"></div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startFromDetail()">この運動で始める ▶</button>
+  </div>
+</div>
+
+<!-- ═══ WORKOUT SCREEN ═══ -->
+<div id="workoutScreen" class="screen">
+  <div class="workout-mode">
+    <button class="back-btn" onclick="confirmExit()">✕ 中止する</button>
+
+    <div class="progress-row" id="progressDots"></div>
+
+    <div class="set-label" id="setLabel"></div>
+    <div class="exercise-name-display" id="currentExerciseName"></div>
+
+    <!-- Demo area -->
+    <div style="font-size:3rem;margin:8px 0" id="demoIcon">🧎</div>
+
+    <!-- Timer -->
+    <div class="timer-circle" id="timerCircle">
+      <span>
+        <div class="time" id="timerDisplay">0:30</div>
+        <div class="label" id="timerLabel">運動中</div>
+      </span>
+    </div>
+
+    <!-- Rest progress -->
+    <div id="restSection" style="display:none">
+      <div class="rest-bar"><div class="rest-bar-inner" id="restBarInner" style="width:0%"></div></div>
+      <p class="hint" id="restText">次の運動へ移りましょう</p>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="pauseBtn" onclick="togglePause()">一時停止</button>
+      <button class="btn btn-primary" id="nextBtn" onclick="nextExercise()">次へ →</button>
+    </div>
+
+    <p class="hint" id="instructionText"></p>
+  </div>
+</div>
+
+<!-- ═══ COMPLETE SCREEN ═══ -->
+<div id="completeScreen" class="screen">
+  <div class="complete-msg">
+    <span class="emoji">🎉</span>
+    <h2>お疲れさまでした！</h2>
+    <p>筋肉が喜んでいます</p>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="num" id="statSets">0</div>
+        <div class="desc">セット完了</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statTime">0</div>
+        <div class="desc">総時間（分）</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statExercises">0</div>
+        <div class="desc">種目</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statCalories">0</div>
+        <div class="desc">推定カロリー</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="resetAndHome()">ホームに戻る</button>
+    <button class="btn btn-warning" onclick="repeatWorkout()">もう一度やる</button>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS SCREEN ═══ -->
+<div id="settingsScreen" class="screen">
+  <h2 style="margin-bottom:16px">⚙️ セットアップ</h2>
+
+  <div class="setting-row">
+    <label>運動秒数</label>
+    <input type="range" min="15" max="60" step="5" value="30" id="durSlider" onchange="updateSetting('duration',this.value)">
+    <span class="val" id="durVal">30秒</span>
+  </div>
+  <div class="setting-row">
+    <label>休憩秒数</label>
+    <input type="range" min="5" max="30" step="5" value="10" id="restSlider" onchange="updateSetting('rest',this.value)">
+    <span class="val" id="restVal">10秒</span>
+  </div>
+  <div class="setting-row">
+    <label>セット回数</label>
+    <input type="range" min="1" max="4" step="1" value="2" id="setSlider" onchange="updateSetting('sets',this.value)">
+    <span class="val" id="setVal">2回</span>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <h2>💾 ホーム画面に追加</h2>
+    <p style="margin-top:6px">Safari / Chrome の「ホーム画面に追加」でアプリみたいに利用できます</p>
+  </div>
+
+  <div class="card" style="margin-top:10px">
+    <h2>ℹ️ アプリ情報</h2>
+    <p style="margin-top:6px">バージョン 1.0.0<br>2025年作成 — 高齢者向け室内筋トレ<br>※医療的な助言ではありません。ご自分の体調に合わせて行ってください。</p>
+  </div>
+</div>
+
+<!-- ═══ NAV BAR ═══ -->
+<nav id="navbar">
+  <button class="active" data-nav="homeScreen" onclick="showNav(this,'homeScreen')">
+    <span class="nav-icon">🏠</span>トップ
+  </button>
+  <button data-nav="workoutScreen" onclick="showNav(this,'workoutScreen')" style="visibility:hidden">
+    <span class="nav-icon">💪</span>运动中
+  </button>
+  <button data-nav="settingsScreen" onclick="showNav(this,'settingsScreen')">
+    <span class="nav-icon">⚙️</span>設定
+  </button>
+</nav>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+
+const EXERCISES = [
+  {
+    id:'sit-stand', name:'座椅子立ち上がり', icon:'🪑', category:'下肢',
+    color:'#4caf50',
+    steps:['用意：背もたれ付き椅子に浅く座る','両手を膝の上に置く','息を吐きながら、お尻を持ち上げるように立つ','1秒間止まって安定させる','息を吸いながらゆっくり座る'],
+    notes:['膝がつらい場合は高い椅子を使う','肘を軽く伸ばすのがコツ'],
+    demo:'🧎'
+  },
+  {
+    id:'wall-pushup', name:'壁倒立 push-up', icon:'🧱', category:'上半身',
+    color:'#2196f3',
+    steps:['壁から腕一本分の距離で立つ','両手で壁をつかむ（肩幅よりやや広く）','鼻→壁→鼻の順で顔を近づけるように体を寄せる','胸が丸くなるまで曲げる','元の位置に戻す'],
+    notes:['壁なので失敗のリスクが少ない','角度を変えれば負荷調整可能'],
+    demo:'🤸'
+  },
+  {
+    id:'seated-march', name:'座椅子マーチング', icon:'🦵', category:'体幹',
+    color:'#ff9800',
+    steps:['背もたれ付き椅子に深く座る','背筋を伸ばし、腰を浮かせない','片足を天井方向へ持ち上げる','つま先を上に引いたまま5秒キープ','ゆっくり下ろして反対側』],
+    notes:['呼吸を止めないこと','太ももの前側が締まる感覚を味わおう'],
+    demo:'🦿'
+  },
+  {
+    id:'wall-sit', name:'Wall スクワット', icon:'🧍', category:'下肢',
+    color:'#4caf50',
+    steps:['壁に背中を付ける','足を少し前に出す','体が滑らないよう壁にもたれる','そのまま30秒〜1分キープ（しゃがみ姿勢）','徐々に脚を広げてもOK'],
+    notes:['膝は90度以下に曲げすぎない','痛みを感じたらすぐ辞める'],
+    demo:'🧘‍♂️'
+  },
+  {
+    id:'rub-shoulders', name:'肩こりストレッチ', icon:'💆', category:'体幹',
+    color:'#ff9800',
+    steps:['肩を大きく前に回るように回す（10回）','次に大きく後ろ回り（10回）','首をゆっくり右・左に傾ける（各5秒）','顎を引き、後ろ手に組んで胸を開く'],
+    notes:['デスクワークの猫背予防に最適','朝晩やりたいところ'],
+    demo:'💃'
+  },
+  {
+    id:'standing-curl', name:'タオルカーリング', icon:'💪', category:'上半身',
+    color:'#2196f3',
+    steps:['タオルを両手で握る','肘を脇に付けて、ゆっくり巻き上げるように曲げる','2秒間止める','ゆっくり戻す'],
+    notes:['重さを増したい場合はペットボトルを持った状態でも','上腕二頭筋の基礎強化'],
+    demo:'🏋️'
+  },
+  {
+    id:'heel-raise', name:'かかと上げ運動', icon:'🦶', category:'下肢',
+    color:'#4caf50',
+    steps:['壁やカウンターにつかまり、直立する','かかとをゆっくり高く上げる','つま先立ちになった状態で3秒キープ','ゆっくり下ろす'],
+    notes:['ふくらはぎは第二の心臓と呼ばれる','転ばないよう支えは必ず使う'],
+    demo:'🩰'
+  },
+  {
+    id:'neck-roll', name:'首のリラックス', icon:'🧘', category:'体幹',
+    color:'#ff9800',
+    steps:['肩の力を抜いて真っ直ぐ座る','右耳を右手へ近づける（5秒）','真ん中→左耳を左手へ（5秒）','顎を引き、後ろを向く（5秒）','優しく首を前後に動かす'],
+    notes:['ぐるぐる回さない（血管に負担）','静かに、ゆっくりが大事'],
+    demo:'😌'
+  }
+];
+
+const PROGRAMS = [
+  {
+    name:'🔥 クイックスタート', desc:'8分ミニマルプログラム', duration:'quick',
+    exercises:['sit-stand','wall-pushup','seated-march']
+  },
+  {
+    name:'💪 下半身集中', desc:'歩きやすさが変わる', duration:'half',
+    exercises:['sit-stand','wall-sit','heel-raise']
+  },
+  {
+    name:'🙆 上半身集中', desc:'荷物を持てるように', duration:'half',
+    exercises:['wall-pushup','standing-curl','rub-shoulders']
+  },
+  {
+    name:'🧘 全身ケア', desc:'朝の目覚めストレッチ+', duration:'full',
+    exercises:['sit-stand','rub-shoulders','seated-march','neck-roll']
+  },
+  {
+    name:'🪑 デスクブレーク', desc:'机から離れて', duration:'mini',
+    exercises:['seated-march','rub-shoulders','neck-roll']
+  }
+];
+
+const TIPS = [
+  '運動は毎日続けることが一番大切です。無理せず、気持ち良い範囲で行いましょう。',
+  '食事と睡眠も筋肉作りの大事な要素です。バランス良く食べましょう。',
+  '運動前は軽くウォーミングアップ、後はクールダウン。ストレッチをお忘れなく。',
+  '水分補給は運動の前・最中・後に行いましょう。',
+  '朝起きてまず一杯の水を飲み、その後に運動を始めると体が目を覚まします。',
+  '階段の時は手すりを使い、一歩ずつ丁寧に。それが最大の予防です。',
+  '筋肉は使わないと減っていきます。「今日もやった」と自己褒美も忘れずに。'
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+
+let cfg = {
+  duration: 30,   // seconds per set
+  rest: 10,       // rest between sets
+  sets: 2         // number of sets
+};
+
+let state = {
+  program: null,    // current program config
+  exIndex: 0,       // current exercise index in program
+  setIndex: 0,      // current set (0..n-1)
+  phase: 'idle',    // idle | exercising | resting | paused | complete
+  timeLeft: 0,
+  timerInterval: null,
+  totalElapsed: 0,
+  lastTick: 0
+};
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+
+(function init() {
+  // Load saved config
+  const saved = localStorage.getItem('seniorFitness_cfg');
+  if (saved) { try { Object.assign(cfg, JSON.parse(saved)); } catch(e){} }
+
+  // Apply sliders
+  document.getElementById('durSlider').value = cfg.duration;
+  document.getElementById('durVal').textContent = cfg.duration + '秒';
+  document.getElementById('restSlider').value = cfg.rest;
+  document.getElementById('restVal').textContent = cfg.rest + '秒';
+  document.getElementById('setSlider').value = cfg.sets;
+  document.getElementById('setVal').textContent = cfg.sets + '回';
+
+  // Daily tip
+  const dayIdx = new Date().getDate() % TIPS.length;
+  document.getElementById('dailyTip').textContent = TIPS[dayIdx];
+
+  renderProgramList();
+  renderExerciseList();
+})();
+
+// ═══════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════
+
+function renderProgramList() {
+  const ul = document.getElementById('programList');
+  ul.innerHTML = PROGRAMS.map((p, i) => `
+    <li class="exercise-item" onclick="startProgram(${i})">
+      <div class="exercise-icon" style="background:${getCatColor(p.desc)}">${p.name.split(' ')[0]}</div>
+      <div class="exercise-info">
+        <h3>${p.name.replace(/^[^\s]+\s*/,'')}</h3>
+        <span>${p.desc}</span>
+      </div>
+    </li>
+  `).join('');
+}
+
+function renderExerciseList() {
+  const ul = document.getElementById('exerciseDetailList');
+  ul.innerHTML = EXERCISES.map((ex, i) => `
+    <li class="exercise-item" onclick="openDetail(${i})">
+      <div class="exercise-icon" style="background:${ex.color}">${ex.icon}</div>
+      <div class="exercise-info">
+        <h3>${ex.name}</h3>
+        <span>${ex.category} ${getReps(ex)}</span>
+      </div>
+    </li>
+  `).join('');
+}
+
+function getCatColor(desc) {
+  if (desc.includes('下半身')) return '#e8f5e9';
+  if (desc.includes('上半身')) return '#e3f2fd';
+  return '#fff3e0';
+}
+
+function getReps(ex) {
+  const full = cfg.sets * 10;
+  return `${cfg.sets}セット×10回`;
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  const navMap = { homeScreen:true, detailScreen:false, workoutScreen:false, completeScreen:false, settingsScreen:true };
+  const showNav = id === 'homeScreen' || id === 'settingsScreen';
+  document.getElementById('navbar').style.display = showNav ? 'flex' : 'none';
+}
+
+function showNav(btn, screenId) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showScreen(screenId);
+}
+
+// ═══════════════════════════════════════════════════════
+// START WORKOUTS
+// ═══════════════════════════════════════════════════════
+
+function startProgram(idx) {
+  const prog = PROGRAMS[idx];
+  state.program = prog;
+  state.exIndex = 0;
+  state.setIndex = 0;
+  state.totalElapsed = 0;
+  state.phase = 'exercising';
+
+  showScreen('workoutScreen');
+  updateProgressDots();
+  loadCurrentExercise();
+}
+
+function startQuickWorkout() {
+  startProgram(0);
+}
+
+function startFromDetail() {
+  const ex = getCurrentExercise();
+  state.program = {
+    name: 'カスタム',
+    duration: 'custom',
+    exercises: [ex.id]
+  };
+  state.exIndex = 0;
+  state.setIndex = 0;
+  state.totalElapsed = 0;
+  state.phase = 'exercising';
+
+  showScreen('workoutScreen');
+  updateProgressDots();
+  loadCurrentExercise();
+}
+
+function getCurrentExercise() {
+  const ids = state.program.exercises;
+  const ex = EXERCISES.find(e => e.id === ids[state.exIndex]);
+  return ex;
+}
+
+// ═══════════════════════════════════════════════════════
+// WORKOUT LOGIC
+// ═══════════════════════════════════════════════════════
+
+function loadCurrentExercise() {
+  const ex = getCurrentExercise();
+  if (!ex) return;
+
+  document.getElementById('currentExerciseName').textContent = ex.name;
+  document.getElementById('demoIcon').textContent = ex.demo;
+
+  const totalTime = cfg.sets * (cfg.duration + (state.setIndex < cfg.sets - 1 ? cfg.rest : 0)) + (cfg.sets - 1) * cfg.rest;
+  document.getElementById('totalTimeHint').textContent = `残り約${Math.ceil(totalTime / 60)}分`;
+
+  // Update instruction
+  const stepNum = (state.exIndex * cfg.sets + state.setIndex) % 5;
+  const allSteps = [];
+  const progIds = state.program.exercises;
+  // Get steps from first exercise
+  const refEx = EXERCISES.find(e => e.id === progIds[0]) || ex;
+  document.getElementById('instructionText').textContent = refEx.steps[(state.setIndex) % refEx.steps.length];
+
+  // Timer display
+  startTimer('exercising');
+}
+
+function updateProgressDots() {
+  const container = document.getElementById('progressDots');
+  const total = state.program.exercises.length * cfg.sets;
+  const current = state.exIndex * cfg.sets + state.setIndex;
+  let html = '';
+  for (let i = 0; i < total; i++) {
+    let cls = '';
+    if (i < current) cls = 'done';
+    else if (i === current) cls = 'current';
+    html += `<div class="progress-dot ${cls}"></div>`;
+  }
+  container.innerHTML = html;
+
+  document.getElementById('setLabel').textContent =
+    `${state.exIndex + 1}/${state.program.exercises.length}種目 | Set ${state.setIndex + 1}/${cfg.sets}`;
+}
+
+function startTimer(phase) {
+  clearInterval(state.timerInterval);
+  state.phase = phase;
+
+  const target = phase === 'exercising' ? cfg.duration : cfg.rest;
+  state.timeLeft = target;
+  state.lastTick = Date.now();
+
+  updateTimerDisplay();
+
+  state.timerInterval = setInterval(() => {
+    state.timeLeft--;
+    state.totalElapsed++;
+    updateTimerDisplay();
+
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerInterval);
+      if (phase === 'exercising') {
+        // Transition to rest or next exercise
+        transitionToNext();
+      } else {
+        // Rest over — go to exercising
+        state.phase = 'exercising';
+        state.timeLeft = cfg.duration;
+        startTimer('exercising');
+        updateRestUI(false);
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  const display = `${m}:${s.toString().padStart(2,'0')}`;
+
+  document.getElementById('timerDisplay').textContent = display;
+
+  const pct = ((cfg.duration - state.timeLeft) / cfg.duration) * 100;
+  const color = state.phase === 'exercising' ? 'var(--green)' : 'var(--orange)';
+  document.getElementById('timerCircle').style.setProperty('--pct', `${state.phase === 'exercising' ? pct : 100 - (state.timeLeft / cfg.rest * 100)}%`);
+
+  if (state.phase === 'exercising') {
+    document.getElementById('timerLabel').textContent = '運動中 💪';
+    document.getElementById('timerDisplay').style.color = 'var(--green)';
+  } else {
+    document.getElementById('timerLabel').textContent = '休憩中 😌';
+    document.getElementById('timerDisplay').style.color = 'var(--orange)';
+  }
+}
+
+function transitionToNext() {
+  // Check if we need more sets
+  if (state.setIndex < cfg.sets - 1) {
+    // Rest then next set of same exercise
+    state.phase = 'resting';
+    updateRestUI(true);
+    startTimer('resting');
+  } else {
+    // Check if more exercises
+    if (state.exIndex < state.program.exercises.length - 1) {
+      state.exIndex++;
+      state.setIndex = 0;
+      state.phase = 'resting';
+      updateRestUI(true);
+      startTimer('resting');
+    } else {
+      // Complete!
+      finishWorkout();
+    }
+  }
+  updateProgressDots();
+}
+
+function updateRestUI(show) {
+  const section = document.getElementById('restSection');
+  section.style.display = show ? 'block' : 'none';
+  if (show) {
+    document.getElementById('restText').textContent = '次の運動へ移りましょう！';
+  }
+}
+
+function togglePause() {
+  if (state.phase === 'paused') {
+    // Resume
+    state.phase = state._prevPhase || 'exercising';
+    document.getElementById('pauseBtn').textContent = '一時停止';
+    startTimer(state.phase);
+  } else {
+    // Pause
+    state._prevPhase = state.phase;
+    state.phase = 'paused';
+    clearInterval(state.timerInterval);
+    document.getElementById('pauseBtn').textContent = '再開する';
+    document.getElementById('timerLabel').textContent = '一時停止 ⏸';
+  }
+}
+
+function nextExercise() {
+  // Skip ahead
+  transitionToNext();
+}
+
+function confirmExit() {
+  if (confirm('運動を中止しますか？'));
+  { clearInterval(state.timerInterval); resetAndHome(); }
+}
+
+// ═══════════════════════════════════════════════════════
+// FINISH
+// ═══════════════════════════════════════════════════════
+
+function finishWorkout() {
+  clearInterval(state.timerInterval);
+  state.phase = 'complete';
+
+  const minutes = Math.round(state.totalElapsed / 60);
+  const cal = Math.round(minutes * 3);
+
+  document.getElementById('statSets').textContent = state.program.exercises.length * cfg.sets;
+  document.getElementById('statTime').textContent = minutes;
+  document.getElementById('statExercises').textContent = state.program.exercises.length;
+  document.getElementById('statCalories').textContent = cal;
+
+  showScreen('completeScreen');
+  document.getElementById('navbar').style.display = 'none';
+}
+
+function resetAndHome() {
+  clearInterval(state.timerInterval);
+  state = {
+    program: null, exIndex: 0, setIndex: 0,
+    phase: 'idle', timeLeft: 0, timerInterval: null,
+    totalElapsed: 0, lastTick: 0
+  };
+  showScreen('homeScreen');
+}
+
+function repeatWorkout() {
+  if (state.program) startProgram(PROGRAMS.findIndex(p => p.name === state.program.name));
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+
+function updateSetting(key, val) {
+  const num = parseInt(val);
+  if (key === 'duration') {
+    cfg.duration = num;
+    document.getElementById('durVal').textContent = num + '秒';
+  } else if (key === 'rest') {
+    cfg.rest = num;
+    document.getElementById('restVal').textContent = num + '秒';
+  } else if (key === 'sets') {
+    cfg.sets = num;
+    document.getElementById('setVal').textContent = num + '回';
+  }
+  localStorage.setItem('seniorFitness_cfg', JSON.stringify(cfg));
+}
+
+// ═══════════════════════════════════════════════════════
+// DETAIL VIEW
+// ═══════════════════════════════════════════════════════
+
+function openDetail(idx) {
+  const ex = EXERCISES[idx];
+  document.getElementById('detailIcon').textContent = ex.icon;
+  document.getElementById('detailName').textContent = ex.name;
+  document.getElementById('detailSteps').innerHTML = `
+    <h4>やり方</h4>
+    <ol>${ex.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+  `;
+  document.getElementById('detailNotes').innerHTML = `
+    <h4>ポイント</h4>
+    <ol>${ex.notes.map(n => `<li>${n}</li>`).join('')}</ol>
+  `;
+  // Store which exercise was clicked for "start from detail"
+  window._selectedExerciseIdx = idx;
+
+  showScreen('detailScreen');
+}
+
+// Re-implement startFromDetail to use selected exercise
+startFromDetail = function() {
+  const idx = window._selectedExerciseIdx || 0;
+  const ex = EXERCISES[idx];
+  state.program = {
+    name: `${ex.icon} ${ex.name}`,
+    duration: 'custom',
+    exercises: [ex.id]
+  };
+  state.exIndex = 0;
+  state.setIndex = 0;
+  state.totalElapsed = 0;
+  state.phase = 'exercising';
+  showScreen('workoutScreen');
+  updateProgressDots();
+  loadCurrentExercise();
+};
+
+// Fix transitionToNext reference in loadCurrentExercise context
+transitionToNext = function() {
+  // Check if we need more sets
+  if (state.setIndex < cfg.sets - 1) {
+    state.setIndex++;
+    state.phase = 'resting';
+    updateRestUI(true);
+    startTimer('resting');
+  } else {
+    // Check if more exercises
+    if (state.exIndex < state.program.exercises.length - 1) {
+      state.exIndex++;
+      state.setIndex = 0;
+      state.phase = 'resting';
+      updateRestUI(true);
+      startTimer('resting');
+    } else {
+      finishWorkout();
+    }
+  }
+  updateProgressDots();
+};
+
+// ═══════════════════════════════════════════════════════
+// PREVENT ZOOM ON DOUBLE-TAP (iOS)
+// ═══════════════════════════════════════════════════════
+
+document.addEventListener('touchstart', function(e) {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+let lastTap = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTap < 300) e.preventDefault();
+  lastTap = now;
+}, { passive: false });
+</script>
+
+</body>
+</html>
